@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <div class="background-grid"></div>
+    <main class="shell">
+      <section class="hero hero-slim">
+        <div class="hero-topbar">
+          <div>
+            <p class="eyebrow">Student Dashboard</p>
+            <h1>Тестийн бүлгүүд</h1>
+            <p class="hero-copy">
+              Эндээс 20 бүлгийн тестээ сонгоно. 1-р бүлэг одоогоор бэлэн байгаа.
+            </p>
+          </div>
+          <button id="logout-button" class="ghost-button" type="button">Гарах</button>
+        </div>
+      </section>
+
+      <section class="panel dashboard-panel">
+        <div class="student-meta">
+          <div>
+            <p class="meta-label">Сурагч</p>
+            <strong id="student-name">-</strong>
+          </div>
+          <div>
+            <p class="meta-label">Access дуусах хугацаа</p>
+            <strong id="student-expiry">-</strong>
+          </div>
+        </div>
+
+        <div id="dashboard-message" class="message muted">
+          Бүлгүүдийг ачаалж байна.
+        </div>
+
+        <section id="group-grid" class="group-grid"></section>
+      </section>
+    </main>
+
+    <script src="/public/student.js"></script>
+  </body>
+</html>

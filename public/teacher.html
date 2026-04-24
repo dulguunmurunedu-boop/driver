@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <div class="background-grid"></div>
+    <main class="shell">
+      <section class="hero hero-slim">
+        <div class="hero-topbar">
+          <div>
+            <p class="eyebrow">Teacher Dashboard</p>
+            <h1>Багшийн удирдлагын хуудас</h1>
+            <p class="hero-copy">
+              Сурагчдын access, бүлгийн явц, хамгийн сүүлийн activity болон шинэ Special ID үүсгэлтийг эндээс хянаарай.
+            </p>
+          </div>
+          <div class="hero-actions">
+            <a class="ghost-link" href="/">Нүүр</a>
+            <button id="teacher-logout-button" class="ghost-button" type="button">Гарах</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid teacher-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Special ID үүсгэх</h2>
+            <p>Шинэ сурагчид 30 хоногийн хугацаатай access нээнэ.</p>
+          </div>
+
+          <form id="teacher-create-form" class="stack">
+            <label>
+              <span>Сурагчийн нэр</span>
+              <input type="text" name="name" placeholder="Сурагчийн нэр" required />
+            </label>
+
+            <button type="submit">Special ID үүсгэх</button>
+          </form>
+
+          <div id="teacher-create-message" class="message muted">
+            Үүсгэсэн access мэдээлэл энд харагдана.
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="stats-grid">
+            <article class="stat-card">
+              <span class="meta-label">Нийт сурагч</span>
+              <strong id="stat-students">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="meta-label">Идэвхтэй нэвтэрсэн</span>
+              <strong id="stat-active-sessions">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="meta-label">Нийт chapter activity</span>
+              <strong id="stat-active-chapters">0</strong>
+            </article>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header compact">
+            <div>
+              <h2>Сурагчдын хяналт</h2>
+              <p>Сүүлийн нэвтрэлт, хийж буй бүлгүүд, оноо, activity.</p>
+            </div>
+            <button id="teacher-refresh-button" class="ghost-button" type="button">Шинэчлэх</button>
+          </div>
+
+          <div id="teacher-dashboard-message" class="message muted">
+            Сурагчдын мэдээллийг ачаалж байна.
+          </div>
+
+          <section id="teacher-student-grid" class="teacher-student-grid"></section>
+        </div>
+      </section>
+    </main>
+
+    <script src="/public/teacher.js"></script>
+  </body>
+</html>

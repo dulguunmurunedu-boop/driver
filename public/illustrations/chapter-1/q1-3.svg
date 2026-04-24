@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420">
+  <rect width="800" height="420" fill="#f6f6f6"/>
+  <g transform="translate(40 40)">
+    <rect width="330" height="250" rx="16" fill="#dfead8"/>
+    <rect x="90" y="0" width="150" height="250" fill="#72777a"/>
+    <g stroke="#fff" stroke-width="6" stroke-dasharray="16 14">
+      <line x1="165" y1="20" x2="165" y2="230"/>
+    </g>
+    <rect x="170" y="150" width="70" height="40" rx="10" fill="#f3d45d"/>
+    <text x="155" y="290" fill="#111" font-size="28" font-family="Arial" font-weight="700">A</text>
+  </g>
+  <g transform="translate(430 40)">
+    <rect width="330" height="250" rx="16" fill="#dfead8"/>
+    <rect x="40" y="0" width="100" height="250" fill="#72777a"/>
+    <rect x="190" y="0" width="100" height="250" fill="#72777a"/>
+    <rect x="145" y="0" width="40" height="250" fill="#67b168"/>
+    <g stroke="#fff" stroke-width="6" stroke-dasharray="16 14">
+      <line x1="90" y1="18" x2="90" y2="232"/>
+      <line x1="240" y1="18" x2="240" y2="232"/>
+    </g>
+    <rect x="220" y="54" width="64" height="34" rx="8" fill="#6dc1e7"/>
+    <text x="155" y="290" fill="#111" font-size="28" font-family="Arial" font-weight="700">Б</text>
+  </g>
+</svg>

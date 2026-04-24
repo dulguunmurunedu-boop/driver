@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driving Test App</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <div class="background-grid"></div>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Driving Course Practice</p>
+        <h1>Жолооны курсын тестийн апп</h1>
+        <p class="hero-copy">
+          Багш нь student access код үүсгэнэ. Сурагч special ID-аараа 30 хоногийн
+          хугацаанд нэвтэрч тест бөглөнө.
+        </p>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Багшийн хэсэг</h2>
+            <p>Нууц үгээр нэвтрээд багшийн dashboard руу орж сурагчдын дата, явц, access үүсгэлтийг хянаарай.</p>
+          </div>
+
+          <form id="teacher-login-form" class="stack">
+            <label>
+              <span>Багшийн нууц үг</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="Жишээ: teacher123"
+                required
+              />
+            </label>
+
+            <button type="submit">Dashboard руу орох</button>
+          </form>
+
+          <div id="teacher-message" class="message muted">
+            Нэвтэрсний дараа багшийн удирдлагын хуудас нээгдэнэ.
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Сурагчийн хэсэг</h2>
+            <p>Special ID-аараа нэвтэрмэгц сурагчийн dashboard руу шууд шилжинэ.</p>
+          </div>
+
+          <form id="student-login-form" class="stack">
+            <label>
+              <span>Special ID</span>
+              <input
+                type="text"
+                name="code"
+                placeholder="Жишээ: DRV-12AB34"
+                required
+              />
+            </label>
+
+            <button type="submit">Нэвтрэх</button>
+          </form>
+
+          <div id="student-auth-message" class="message muted">
+            Нэвтэрсний дараа 20 бүлэгтэй үндсэн student хуудас нээгдэнэ.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/public/app.js"></script>
+  </body>
+</html>

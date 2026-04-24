@@ -1,0 +1,10 @@
+{
+  "name": "driving-test-app",
+  "version": "1.0.0",
+  "description": "Simple driving course practice test app with time-limited student access",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT"
+}

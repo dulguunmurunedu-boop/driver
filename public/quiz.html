@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz Chapter</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <div class="background-grid"></div>
+    <main class="shell">
+      <section class="hero hero-slim">
+        <div class="hero-topbar">
+          <div>
+            <p class="eyebrow">Quiz View</p>
+            <h1 id="quiz-page-title">Бүлгийн тест</h1>
+            <p id="quiz-page-description" class="hero-copy">
+              Бүлгийн асуултуудыг бөглөөд хариултаа шалгана.
+            </p>
+          </div>
+          <a class="ghost-link" href="/student">Бүлгүүд рүү буцах</a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="student-meta">
+          <div>
+            <p class="meta-label">Сурагч</p>
+            <strong id="quiz-student-name">-</strong>
+          </div>
+          <div>
+            <p class="meta-label">Access дуусах хугацаа</p>
+            <strong id="quiz-student-expiry">-</strong>
+          </div>
+        </div>
+
+        <div id="quiz-message" class="message muted">
+          Асуултуудыг ачаалж байна.
+        </div>
+
+        <form id="quiz-form" class="quiz-list"></form>
+        <button id="submit-quiz" class="submit-button" type="button">
+          Хариулт шалгах
+        </button>
+        <div id="quiz-result" class="message muted">
+          Шалгасны дараа үр дүн энд харагдана.
+        </div>
+      </section>
+    </main>
+
+    <script src="/public/quiz.js"></script>
+  </body>
+</html>

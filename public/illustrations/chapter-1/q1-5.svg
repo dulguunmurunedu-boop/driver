@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340">
+  <rect width="900" height="340" fill="#f5f5f5"/>
+  <g transform="translate(40 40)">
+    <rect width="240" height="180" rx="14" fill="#dce8d5"/>
+    <path d="M90 180 L120 0 L150 0 L180 180 Z" fill="#75797d"/>
+    <text x="112" y="210" font-size="24" font-family="Arial" fill="#111">A</text>
+  </g>
+  <g transform="translate(330 40)">
+    <rect width="240" height="180" rx="14" fill="#dce8d5"/>
+    <path d="M104 180 L104 70 L140 36 L140 0 L170 0 L170 36 L206 70 L206 180 Z" fill="#75797d"/>
+    <polygon points="176,58 196,68 176,78" fill="#f2d54a"/>
+    <polygon points="154,48 154,88 118,68" fill="#f2d54a"/>
+    <text x="110" y="210" font-size="24" font-family="Arial" fill="#111">Б</text>
+  </g>
+  <g transform="translate(620 40)">
+    <rect width="240" height="180" rx="14" fill="#dce8d5"/>
+    <path d="M90 180 L120 0 L150 0 L180 180 Z" fill="#75797d"/>
+    <polygon points="188,42 214,88 162,88" fill="none" stroke="#f08e5c" stroke-width="8"/>
+    <text x="108" y="210" font-size="24" font-family="Arial" fill="#111">В</text>
+  </g>
+</svg>

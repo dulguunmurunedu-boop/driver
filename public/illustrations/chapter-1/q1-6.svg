@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360">
+  <rect width="900" height="360" fill="#f5f5f5"/>
+  <g transform="translate(40 40)">
+    <rect width="360" height="220" rx="16" fill="#dce8d5"/>
+    <path d="M140 0 L220 0 L220 120 L360 120 L360 180 L0 180 L0 120 L140 120 Z" fill="#707578"/>
+    <text x="170" y="258" font-size="26" font-family="Arial" fill="#111">A</text>
+  </g>
+  <g transform="translate(500 40)">
+    <rect width="360" height="220" rx="16" fill="#dce8d5"/>
+    <path d="M150 0 L210 0 L210 220 L150 220 Z" fill="#707578"/>
+    <path d="M0 120 L360 120 L360 180 L0 180 Z" fill="#707578"/>
+    <text x="168" y="258" font-size="26" font-family="Arial" fill="#111">Б</text>
+  </g>
+</svg>
