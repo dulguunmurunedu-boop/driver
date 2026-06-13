@@ -8,6 +8,16 @@
   </head>
   <body>
     <div class="background-grid"></div>
+    <div id="security-watermark" class="security-watermark" aria-hidden="true"></div>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="image-modal" style="display:none;" onclick="closeImageModal()">
+      <div class="image-modal-content" onclick="event.stopPropagation()">
+        <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="image-modal-img" class="image-modal-img" src="" alt="Том зураг" />
+      </div>
+    </div>
+
     <main class="shell">
       <section class="hero hero-slim">
         <div class="hero-topbar">

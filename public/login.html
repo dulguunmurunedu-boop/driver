@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Нэвтрэх — Жолооны дүрмийн тест</title>
+    <link rel="stylesheet" href="/public/platform.css" />
+    <script src="/public/platform.js"></script>
+    <style>
+      .login-shell {
+        max-width: 440px;
+        margin: 0 auto;
+        padding: 40px 18px 60px;
+      }
+      .login-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 26px;
+        text-align: center;
+      }
+      .login-brand .brand-mark { width: 56px; height: 56px; font-size: 28px; border-radius: 16px; }
+      .login-brand h1 { margin: 0; font-size: 22px; }
+      .login-brand p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+      .login-card { padding: 26px 22px; }
+      .login-card h2 { margin: 0 0 4px; font-size: 17px; }
+      .login-card .hint { margin: 0 0 16px; font-size: 13px; color: var(--text-muted); }
+      .field { display: block; margin-bottom: 14px; }
+      .field span {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+      }
+      .field input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 13px 14px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 16px;
+        font-family: inherit;
+        transition: border-color var(--transition);
+      }
+      .field input:focus { outline: none; border-color: var(--primary); }
+      .access-input { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+      .login-card .btn { width: 100%; }
+      .message { margin-top: 14px; font-size: 14px; font-weight: 600; display: none; }
+      .message.show { display: block; }
+      .message.error { color: var(--danger); }
+      .message.ok { color: var(--success); }
+      .teacher-toggle {
+        margin: 22px auto 0;
+        display: block;
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-muted);
+        background: none;
+      }
+      .teacher-toggle:hover { color: var(--text-secondary); }
+      #teacher-card { margin-top: 14px; }
+      #teacher-card[hidden] { display: none; }
+      .expired-banner {
+        background: var(--danger-soft);
+        color: var(--danger);
+        border-radius: var(--radius-sm);
+        padding: 13px 15px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-shell">
+      <div class="login-brand">
+        <span class="brand-mark" aria-hidden="true">🚗</span>
+        <h1>Жолооны дүрмийн тест</h1>
+        <p>40 бүлэг · 800 асуулт · Сургалт ба шалгалтын горим</p>
+      </div>
+
+      <div class="expired-banner" id="expired-banner" hidden>
+        Таны хандах эрхийн хугацаа дууссан байна. Багштайгаа холбогдоно уу.
+      </div>
+
+      <div class="card login-card">
+        <h2>Сурагчийн нэвтрэлт</h2>
+        <p class="hint">Багшаас өгсөн Special Access ID-аа оруулна уу.</p>
+        <form id="student-login-form">
+          <label class="field">
+            <span>Special Access ID</span>
+            <input
+              class="access-input"
+              type="text"
+              name="code"
+              placeholder="DRV-XXXX-XXXX"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              required
+            />
+          </label>
+          <button class="btn btn-primary" type="submit">Нэвтрэх</button>
+        </form>
+        <div class="message" id="student-message" role="alert"></div>
+      </div>
+
+      <button class="teacher-toggle" id="teacher-toggle" type="button">
+        Багш / Админ нэвтрэлт →
+      </button>
+
+      <div class="card login-card" id="teacher-card" hidden>
+        <h2>Багшийн нэвтрэлт</h2>
+        <p class="hint">Удирдлагын самбарт нэвтрэх нууц үгээ оруулна уу.</p>
+        <form id="teacher-login-form">
+          <label class="field">
+            <span>Нууц үг</span>
+            <input type="password" name="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn btn-soft" type="submit">Удирдлагын самбар руу орох</button>
+        </form>
+        <div class="message" id="teacher-message" role="alert"></div>
+      </div>
+    </div>
+
+    <script src="/public/login.js"></script>
+  </body>
+</html>

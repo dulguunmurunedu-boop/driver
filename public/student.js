@@ -65,6 +65,14 @@ function renderGroups(groups) {
     .join("");
 }
 
+function formatAvailableGroups(groups) {
+  const availableTitles = groups.filter((group) => group.available).map((group) => group.title);
+  if (!availableTitles.length) {
+    return "Бүлгийн жагсаалт бэлэн боллоо.";
+  }
+  return `${availableTitles.join(", ")} нээлттэй байна.`;
+}
+
 async function init() {
   if (!token) {
     window.location.href = "/";
@@ -80,7 +88,7 @@ async function init() {
     studentName.textContent = me.student.name;
     studentExpiry.textContent = formatDate(me.student.expiresAt);
     renderGroups(groupsData.groups);
-    setMessage(dashboardMessage, "20 бүлгийн жагсаалт бэлэн боллоо. 1-р бүлгийг эхлүүлж болно.", "success");
+    setMessage(dashboardMessage, formatAvailableGroups(groupsData.groups), "success");
   } catch (error) {
     localStorage.removeItem("studentToken");
     setMessage(dashboardMessage, error.message, "error");

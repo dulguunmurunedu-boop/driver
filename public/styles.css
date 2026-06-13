@@ -36,8 +36,21 @@ body {
   pointer-events: none;
 }
 
+.security-watermark {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.13;
+  z-index: 2;
+  background-image: var(--watermark-image, none);
+  background-repeat: repeat;
+  background-size: 360px 220px;
+  mix-blend-mode: screen;
+}
+
 .shell {
   position: relative;
+  z-index: 3;
   max-width: 1180px;
   margin: 0 auto;
   padding: 48px 20px 64px;
@@ -189,6 +202,14 @@ button:hover,
   gap: 10px;
 }
 
+.hero-actions .ghost-button,
+.hero-actions .ghost-link {
+  min-width: 108px;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+}
+
 .message {
   margin-top: 16px;
   padding: 14px 16px;
@@ -258,7 +279,7 @@ button:hover,
 }
 
 .group-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .group-card {
@@ -618,4 +639,45 @@ button:hover,
   .group-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Image Modal */
+.image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 95vw;
+  max-height: 95vh;
+  cursor: default;
+}
+
+.image-modal-img {
+  max-width: 95vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: #fff;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.image-modal-close:hover {
+  color: #ffa737;
 }

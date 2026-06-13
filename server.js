@@ -11,7 +11,220 @@ const DATA_DIR = process.env.DATA_DIR
 const DATA_FILE = path.join(DATA_DIR, "store.json");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ACCESS_DURATION_DAYS = 30;
-const MAX_ACTIVITY_LOG_ITEMS = 12;
+const MAX_ACTIVITY_LOG_ITEMS = 100;
+const MAX_EXAM_RESULTS_KEPT = 200;
+const ACTIVE_STUDENT_WINDOW_MS = 5 * 60 * 1000;
+const TOTAL_PLATFORM_CHAPTERS = 40;
+const PLATFORM_PASS_SCORE = 18;
+const EXPIRED_LOGIN_MESSAGE =
+  "Таны хандах эрхийн хугацаа дууссан байна. Багштайгаа холбогдоно уу.";
+
+const chapterTwoQuizzes = [
+  {
+    id: "2.1",
+    question: "\"A\" ангилалд аль тээврийн хэрэгсэл хамаарагдах вэ?",
+    options: [
+      "Суудлын автомашин",
+      "Мотоцикл",
+      "Мотоцикл болон мопед",
+      "Дээрх бүгд"
+    ],
+    answer: 1,
+    explanation: "\"A\" ангилалд мотоцикл хамаарна. Суудлын автомашин болон мопед нь өөр ангилалд орно."
+  },
+  {
+    id: "2.2",
+    question: "Мотоциклыг жолоодох эрх авч болох насны доод хязгаар хэд вэ?",
+    options: ["16 нас", "18 нас", "21 нас"],
+    answer: 0,
+    explanation: "Энэ тестийн ангиллын дагуу мотоцикл жолоодох эрхийн доод нас нь 16."
+  },
+  {
+    id: "2.3",
+    question: "\"B\" ангилалд чиргүүлтэй суудлын автомашин хамаарагдах уу?",
+    options: [
+      "Хамаарагдана",
+      "Хамаарагдахгүй",
+      "Чиргүүлийн бүх жин 750 кг-аас ихгүй бол хамаарагдана"
+    ],
+    answer: 2,
+    explanation: "\"B\" ангилалд чиргүүлтэй суудлын автомашин зөвхөн чиргүүлийн бүх жин 750 кг-аас ихгүй үед хамаарна."
+  },
+  {
+    id: "2.4",
+    question: "\"B\" ангилалд ачааны автомашин хамаарагдах уу?",
+    options: [
+      "Хамаарагдана",
+      "Хамаарагдахгүй",
+      "Бүх жин нь 3.5 тонноос бага бол хамаарагдана"
+    ],
+    answer: 2,
+    explanation: "\"B\" ангилалд бүх жин нь 3.5 тонноос бага ачааны автомашин хамаарна."
+  },
+  {
+    id: "2.5",
+    question: "Бүх жин нь 3.5 тонноос бага ачааны автомашин аль ангилалд хамаарагдах вэ?",
+    options: [
+      "Зөвхөн \"B\" ангилал",
+      "Зөвхөн \"C\" ангилал",
+      "Зөвхөн \"C1\" дэд ангилал",
+      "\"B\" болон \"C1\" ангилал"
+    ],
+    answer: 3,
+    explanation: "3.5 тонноос бага жинтэй ачааны автомашин нь энэ тестийн дагуу \"B\" болон \"C1\" ангилалд хамаарна."
+  },
+  {
+    id: "2.6",
+    question: "\"B\" ангилалд тээврийн хэрэгсэл жолоодох эрхтэй хүн бүх жин нь 3.5 тонноос бага ачааны автомашинаар чиргүүл чирч хөдөлгөөнд оролцохыг зөвшөөрөх үү?",
+    options: [
+      "Зөвшөөрнө",
+      "Хориглоно",
+      "Чиргүүлийн бүх жин нь 750 кг-аас бага бол зөвшөөрнө",
+      "Чиргүүлийн бүх жин нь 3500 кг-аас бага бол зөвшөөрнө"
+    ],
+    answer: 2,
+    explanation: "\"B\" ангилалд 3.5 тонноос бага жинтэй тээврийн хэрэгслээр чиргүүл чирэхийг зөвхөн чиргүүлийн бүх жин 750 кг-аас бага үед зөвшөөрнө."
+  },
+  {
+    id: "2.7",
+    question: "1 тонн даацын чиргүүлтэй бүх жин нь 3.5 тонноос бага ачааны автомашин аль ангилалд хамаарагдах вэ?",
+    options: ["\"B\" ангилал", "\"BE\" ангилал", "\"C\" ангилал", "\"CE\" ангилал"],
+    answer: 1,
+    explanation: "750 кг-аас их жинтэй чиргүүлтэй \"B\" ангиллын автомашин нь \"BE\" ангилалд хамаарна."
+  },
+  {
+    id: "2.8",
+    question: "\"BE\" ангилалд аль тээврийн хэрэгсэл хамаарагдах вэ?",
+    options: [
+      "Бүх жин нь 750 кг-аас илүүгүй чиргүүлтэй \"B\" ангиллын автомашин",
+      "Бүх жин нь 750 кг-аас илүү чиргүүлтэй бага оврын автобус",
+      "Бүх жин нь 750 кг-аас илүү чиргүүлтэй бүх төрлийн ачааны автомашин",
+      "Дээрх бүгд"
+    ],
+    answer: 0,
+    explanation: "\"BE\" ангилал нь \"B\" ангиллын автомашинд холбоотой чиргүүлтэй нөхцөлийг илэрхийлнэ."
+  },
+  {
+    id: "2.9",
+    question: "\"B\" ангилалд автобус хамаарах уу?",
+    options: [
+      "Хамаарагдана",
+      "Хамаарагдахгүй",
+      "Жолоочоос гадна 18-аас илүүгүй хүний суудалтай бол хамаарагдана"
+    ],
+    answer: 1,
+    explanation: "Автобус нь \"B\" ангилалд хамаарахгүй."
+  },
+  {
+    id: "2.10",
+    question: "\"B\" ангиллын тээврийн хэрэгсэл жолоодох эрхтэй хүн автобус жолоодохыг зөвшөөрөх үү?",
+    options: [
+      "Зөвшөөрнө",
+      "Хориглоно",
+      "Өөрөөсөө гадна 8-аас илүүгүй хүн тээвэрлэсэн бол зөвшөөрнө"
+    ],
+    answer: 1,
+    explanation: "\"B\" ангиллын эрхээр автобус жолоодохыг зөвшөөрөхгүй."
+  },
+  {
+    id: "2.11",
+    question: "\"C\" ангилалд аль тээврийн хэрэгсэл хамаарагдах вэ?",
+    options: [
+      "Бүх жин нь 3.5 тонноос их ачааны автомашин",
+      "Бүх жин нь 3.5 тонноос бага ачааны автомашин",
+      "Бүх төрлийн ачааны автомашин"
+    ],
+    answer: 0,
+    explanation: "\"C\" ангилалд бүх жин нь 3.5 тонноос их ачааны автомашин хамаарна."
+  },
+  {
+    id: "2.12",
+    question: "\"B\" ангиллын тээврийн хэрэгсэл жолоодох эрхтэй хүн бүх жин нь 5 тонн ачааны автомашин жолоодохыг зөвшөөрөх үү?",
+    options: [
+      "Зөвшөөрнө",
+      "Хориглоно",
+      "Бодит жин нь ж. 3.5 тонноос хэтрэхгүй бол зөвшөөрнө"
+    ],
+    answer: 1,
+    explanation: "5 тонн бүх жинтэй ачааны автомашин нь \"B\" ангиллын хүрээнээс хэтэрдэг."
+  },
+  {
+    id: "2.13",
+    question: "Зурагт үзүүлсэн автомашин аль ангилалд хамаарагдах вэ?",
+    options: ["\"C\" ангилал", "\"CE\" ангилал", "\"M\" ангилал"],
+    answer: 1,
+    explanation: "Чиргүүлтэй ачааны автомашин тул энэ тестийн дагуу \"CE\" ангилалд хамаарна.",
+    illustration: "/public/illustrations/chapter-2/q2-13.jpeg"
+  },
+  {
+    id: "2.14",
+    question: "\"C1\" дэд ангилалд аль автомашин хамаарагдах вэ?",
+    options: [
+      "Бүх жин нь 3.5 тонноос бага ачааны автомашин",
+      "Бүх жин нь 3.5 тонноос 7.5 тонн хүртэлх ачааны автомашин",
+      "Бүх жин нь 3.5 тонноос их бүх ачааны автомашин"
+    ],
+    answer: 1,
+    explanation: "\"C1\" дэд ангилал нь 3.5-7.5 тонн хүртэлх ачааны автомашинд хамаарна."
+  },
+  {
+    id: "2.15",
+    question: "\"D\" ангилалд аль тээврийн хэрэгсэл хамаарагдах вэ?",
+    options: [
+      "Жолоочоос гадна 8-аас илүүгүй хүний суудалтай автомашин",
+      "Зөвхөн 16 хүртлэх хүний суудалтай автобус",
+      "Бүх төрлийн автобус, троллейбус"
+    ],
+    answer: 2,
+    explanation: "\"D\" ангилалд автобус болон троллейбус хамаарна."
+  },
+  {
+    id: "2.16",
+    question: "Зурагт үзүүлсэн автобус аль ангилалд хамаарагдах вэ?",
+    options: ["\"D\" ангилал", "\"DE\" ангилал", "\"D1\" дэд ангилал", "\"D1E\" ангилал"],
+    answer: 1,
+    explanation: "Үзүүлсэн автобус нь залгаастай буюу чиргүүлэн хэсэгтэй тул \"DE\" ангилалд хамаарна.",
+    illustration: "/public/illustrations/chapter-2/q2-16.jpeg"
+  },
+  {
+    id: "2.17",
+    question: "\"D1\" дэд ангилалд аль автомашин хамаарагдах вэ?",
+    options: [
+      "Жолоочоос гадна 8-аас илүүгүй хүний суудалтай хүн тээвэрлэхэд зориулсан автомашин",
+      "Жолоочоос гадна 16-аас илүүгүй хүний суудалтай автобус",
+      "Бүх төрлийн автобус"
+    ],
+    answer: 1,
+    explanation: "\"D1\" нь жолоочоос гадна 16-аас илүүгүй суудалтай автобуст хамаарна."
+  },
+  {
+    id: "2.18",
+    question: "Зураг үзүүлсэн автомашин жолоочоос гадна 14 хүний суудалтай бол аль ангилалд хамаарагдах вэ?",
+    options: [
+      "\"B\" ангилал",
+      "Зөвхөн \"D\" ангилал",
+      "Зөвхөн \"D1\" дэд ангилал",
+      "\"D\" ангилал болон \"D1\" дэд ангилал"
+    ],
+    answer: 3,
+    explanation: "14 суудалтай ийм тээврийн хэрэгсэл нь \"D1\" хүрээнд орно, мөн \"D\" ангиллын шаардлагад ч багтана.",
+    illustration: "/public/illustrations/chapter-2/q2-18.jpeg"
+  },
+  {
+    id: "2.19",
+    question: "Трактор аль ангилалд хамаарагдах вэ?",
+    options: ["\"C\" ангилал", "\"CE\" ангилал", "\"M\" ангилал"],
+    answer: 2,
+    explanation: "Энэ тестийн ангиллын дагуу трактор нь \"M\" ангилалд хамаарна."
+  },
+  {
+    id: "2.20",
+    question: "Трактор жолоодох эрх авч болох насны доод хязгаар хэд вэ?",
+    options: ["18 нас", "21 нас", "24 нас"],
+    answer: 1,
+    explanation: "Энэ тестийн дагуу трактор жолоодох эрхийн доод нас нь 21."
+  }
+];
 
 const chapterOneQuizzes = [
       {
@@ -390,26 +603,686 @@ const chapterThirteenQuizzes = [
   }
 ];
 
-const quizGroups = Array.from({ length: 20 }, (_, index) => {
-  const chapterNumber = index + 1;
-  const active = chapterNumber === 1 || chapterNumber === 13;
-  const chapterKey = `chapter-${chapterNumber}`;
-  const quizzesByChapter = {
-    "chapter-1": chapterOneQuizzes,
-    "chapter-13": chapterThirteenQuizzes
-  };
-  return {
-    id: chapterKey,
-    title: `${chapterNumber}-р бүлэг`,
-    description:
-      chapterNumber === 1
-        ? "Замын хөдөлгөөний дүрмийн үндсэн ойлголтын 20 асуулт"
-        : chapterNumber === 13
-          ? "Зохицуулагч болон гэрлэн дохионы нөхцөлтэй 20 асуулт"
-          : `${chapterNumber}-р бүлгийн асуултууд удахгүй нэмэгдэнэ`,
-    quizzes: quizzesByChapter[chapterKey] || []
-  };
-});
+const chapterSixteenQuizzes = [
+  {
+    id: "8.31",
+    question: "Суурин газарт дуут дохио өгөхийг зөвшөөрөх үү?",
+    options: [
+      "Зөвшөөрнө",
+      "Хориглоно",
+      "Зам тээврийн ослоос урьдчилан сэргийлэх зорилгоор өгөхийг зөвшөөрнө"
+    ],
+    answer: 2
+  },
+  {
+    id: "8.32",
+    question: "Гүйцэж түрүүлж байгаагаа бусад жолоочид анхааруулах зорилгоор дуут дохио өгөхийг зөвшөөрөх үү?",
+    options: [
+      "Зөвшөөрнө",
+      "Хориглоно",
+      "Зөвхөн суурин газрын гаднах замд зөвшөөрнө"
+    ],
+    answer: 2
+  },
+  {
+    id: "8.33",
+    question: "Гүйцэж түрүүлж байгаагаа бусад жолоочид анхааруулах зорилгоор гэрэл шилжүүлэх дохио өгөхийг зөвшөөрөх үү?",
+    options: [
+      "Бусад жолоочийн нүдийг гялбуулахгүй бол зөвшөөрнө",
+      "Зөвхөн суурин газрын гаднах замд зөвшөөрнө",
+      "Хориглоно"
+    ],
+    answer: 0
+  },
+  {
+    id: "8.34",
+    question: "Та суудлын автомашины жолоочид зам тавьж өгөхөөр шийдсэн бол түүнд хэрхэн мэдэгдэх вэ?",
+    options: [
+      "Дуут дохио өгнө",
+      "Ослын дохионы гэрлээ асаана",
+      "Гэрэл шилжүүлэх дохио өгнө",
+      "Баруун гар тийш эргэх дохио өгнө"
+    ],
+    answer: 3,
+    illustration: "/public/illustrations/chapter-16/q8-34.jpeg"
+  },
+  {
+    id: "8.35",
+    question: "Өөдөөс яваа ачааны автомашины бүхээг дээрх гурван гэрэл ямар утга илэрхийлэх вэ?",
+    options: [
+      "Аюултай ачаа тээвэрлэж яваа болохыг",
+      "Механикжсан тээврийн хэрэгсэл чирч яваа болохыг",
+      "Овор ихтэй ачаа тээвэрлэж яваа болохыг",
+      "Чиргүүл чирч яваа болохыг"
+    ],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-16/q8-35.jpeg"
+  },
+  {
+    id: "8.36",
+    question: "Урд яваа тээврийн хэрэгслийн таних тэмдгүүд ямар утга илэрхийлэх вэ?",
+    options: [
+      "Аюултай ачаатай бөгөөд хурд нь цагт 40 км-ээс хэтрэхгүй болохыг",
+      "Хүнд ачаатай бөгөөд араас нь яваа тээврийн хэрэгслүүд цагт 40 км-ээс илүү хурдтай явах хориотойг",
+      "Урт тээврийн хэрэгслийг цагт 40 км-ээс илүү хурдаар гүйцэх хориотойг"
+    ],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-16/q8-36.jpeg"
+  },
+  {
+    id: "8.37",
+    question: "Таны урд ямар тээврийн хэрэгсэл явж байна вэ?",
+    options: [
+      "Дадлагын тээврийн хэрэгсэл",
+      "Удаан явдалт тээврийн хэрэгсэл",
+      "Хадаастай дугуйтай тээврийн хэрэгсэл",
+      "Чирүүлж яваа тээврийн хэрэгсэл"
+    ],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q8-37.jpeg"
+  },
+  {
+    id: "8.38",
+    question: "Таны урд ямар тээврийн хэрэгсэл явж байна вэ?",
+    options: [
+      "Урт тээврийн хэрэгсэл",
+      "Хүнд даацын тээврийн хэрэгсэл",
+      "Аюултай ачаатай тээврийн хэрэгсэл",
+      "Овор ихтэй ачаатай тээврийн хэрэгсэл"
+    ],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-16/q8-38.jpeg"
+  },
+  {
+    id: "8.39",
+    question: "Урд яваа тээврийн хэрэгслийн таних тэмдэг ямар утга илэрхийлэх вэ?",
+    options: [
+      "Аюултай ачаа тээвэрлэж яваа болохыг",
+      "Хөгжлийн бэрхшээлтэй хүн жолоодож яваа болохыг",
+      "Жолоодох эрх аваад удаагүй хүн жолоодож яваа болохыг",
+      "Дүрэмд тусгагдсан таних тэмдгээр анхааруулаагүй бусад онцлог бүхий ачаа тээвэрлэж яваа"
+    ],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-16/q8-39.jpeg"
+  },
+  {
+    id: "8.40",
+    question: "Таны урд ямар тээврийн хэрэгсэл явж байна вэ?",
+    options: [
+      "Цагдаагийн байгууллагын автомашин",
+      "Цэргийн ангийн автомашин",
+      "Цэцэрлэгийн хүүхэд тээвэрлэж яваа автомашин",
+      "Цуваагаар яваа автомашин"
+    ],
+    answer: 3,
+    illustration: "/public/illustrations/chapter-16/q8-40.jpeg"
+  },
+  {
+    id: "9.1",
+    question: "Жолооч хөдөлгөөн эхлэхийн өмнө:",
+    options: [
+      "Зам, орчны байдлыг биеэр шалгаж, аюул, осол үүсэхгүй байх нөхцөлийг хангана",
+      "Чиг заах дохио өгнө",
+      "Бусад оролцогчдод зам тавьж өгнө",
+      "Дээрх бүх үүргийг хүлээнэ"
+    ],
+    answer: 3
+  },
+  {
+    id: "9.2",
+    question: "Аль тээврийн хэрэгслийн жолооч зам тавьж өгөх үүрэгтэй вэ?",
+    options: ["Ачааны автомашин", "Суудлын автомашин"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q9-2.jpeg"
+  },
+  {
+    id: "9.3",
+    question: "Та зогсоолд орж зогсохдоо ачааны автомашинд зам тавьж өгөх үүрэгтэй юу?",
+    options: ["Тийм", "Үгүй"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q9-3.jpeg"
+  },
+  {
+    id: "9.4",
+    question: "Аль тээврийн хэрэгслийн жолооч зам тавьж өгөх үүрэгтэй юу?",
+    options: ["Хөдөлгөөн эхлэх гэж байгаа нь", "Зогсох гэж байгаа нь"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-16/q9-4.jpeg"
+  },
+  {
+    id: "9.5",
+    question: "Аль тээврийн хэрэгслийн жолооч зам тавьж өгөх үүрэгтэй вэ?",
+    options: ["Ачааны автомашин", "Суудлын автомашин"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-16/q9-5.jpeg"
+  },
+  {
+    id: "9.6",
+    question: "Аль тээврийн хэрэгслийн жолооч давуу эрхтэй вэ?",
+    options: ["Суудлын автомашин", "Мотоцикл"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q9-6.jpeg"
+  },
+  {
+    id: "9.7",
+    question: "Харилцан байраа солих тохиолдолд аль тээврийн хэрэгслийн жолооч зам тавьж өгөх үүрэгтэй вэ?",
+    options: ["Ачааны автомашин", "Суудлын автомашин"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-16/q9-7.jpeg"
+  },
+  {
+    id: "9.8",
+    question: "Тээврийн хэрэгслүүдийн харилцан. байраа солих дарааллыг заана уу?",
+    options: ["Б, А, В", "В, Б, А", "Б, В, А", "А, Б, В"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q9-8.jpeg"
+  },
+  {
+    id: "9.9",
+    question: "Аль тохиолдолд суудлын автомашины жолооч зам тавьж өгөх үүрэгтэй вэ?",
+    options: ["Зөвхөн A", "Зөвхөн Б", "А, Б"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q9-9.jpeg"
+  },
+  {
+    id: "9.10",
+    question: "Аль тохиолдолд суудлын автомашины жолооч зам тавьж өгөх үүрэгтэй вэ?",
+    options: ["Зөвхөн A", "Зөвхөн Б", "А, Б"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-16/q9-10.jpeg"
+  }
+];
+
+const chapterEighteenQuizzes = [
+  {
+    id: "9.31",
+    question: "Аль эгнээнээс чигээрээ нэвтрэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-18/q9-31.jpeg"
+  },
+  {
+    id: "9.32",
+    question: "Зурагт үзүүлсэн уулзвараар та баруун гар тийш эргэхийн өмнө байраа хэрхэн эзлэх вэ?",
+    options: ["Захын үргэлжилсэн шугамд шахаж", "Хашлагаанд шахаж"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-32.jpeg"
+  },
+  {
+    id: "9.33",
+    question: "Та уулзвараар зүүн гар тийш эргэхийн тулд аль эгнээг сонгох вэ?",
+    options: ["Зүүн гар талын эгнээг", "Эзэлж яваа эгнээг"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-18/q9-33.jpeg"
+  },
+  {
+    id: "9.34",
+    question: "Аль тээврийн хэрэгслийн хөдөлгөөнийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн ачааны автомашин", "Зөвхөн суудлын автомашин", "Хоёуланг зөвшөөрнө"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-34.jpeg"
+  },
+  {
+    id: "9.35",
+    question: "Зурагт үзүүлснээр баруун гар тийш эргэхийг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-35.jpeg"
+  },
+  {
+    id: "9.36",
+    question: "Энэ эгнээнээс аль чигт явахыг зөвшөөрөх вэ?",
+    options: [
+      "Зөвхөн баруун гар тийш",
+      "Зөвхөн чигээрээ буюу баруун гар тийш",
+      "Буцаж эргэхээс бусад чигт",
+      "Бүх чигт"
+    ],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-18/q9-36.jpeg"
+  },
+  {
+    id: "9.37",
+    question: "Аль тээврийн хэрэгслийн жолооч байраа буруу эзэлсэн бэ?",
+    options: ["Суудлын автомашин", "Ачааны автомашин"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-18/q9-37.jpeg"
+  },
+  {
+    id: "9.38",
+    question: "Аль эгнээнээс тойрох хөдөлгөөнтэй уулзварт орохыг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-18/q9-38.jpeg"
+  },
+  {
+    id: "9.39",
+    question: "Аль эгнээнээс зүүн гар тийш эргэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-39.jpeg"
+  },
+  {
+    id: "9.40",
+    question: "Аль чигт явахыг зөвшөөрөх вэ?",
+    options: ["Зөвхөн Б", "Зөвхөн Б, В", "Зөвхөн Б, В, Г", "Зөвхөн В, Г", "Зөвхөн А, В, Г"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-18/q9-40.jpeg"
+  },
+  {
+    id: "9.41",
+    question: "Аль тээврийн хэрэгслийн хөдөлгөөнийг хориглох вэ?",
+    options: [
+      "Зөвхөн суудлын автомашин",
+      "Зөвхөн мотоцикл",
+      "Хоёуланг хориглоно",
+      "Хоёуланг зөвшөөрнө"
+    ],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-41.jpeg"
+  },
+  {
+    id: "9.42",
+    question: "Аль тээврийн хэрэгслийн жолооч эгнээ байраа буруу эзэлсэн бэ?",
+    options: ["Зөвхөн ачааны автомашин", "Зөвхөн суудлын автомашин", "Хоёул буруу", "Хоёул зөв"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-18/q9-42.jpeg"
+  },
+  {
+    id: "9.43",
+    question: "Аль эгнээнээс зүүн гар тийш эргэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-43.jpeg"
+  },
+  {
+    id: "9.44",
+    question: "Аль эгнээнээс буцаж эргэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-44.jpeg"
+  },
+  {
+    id: "9.45",
+    question: "Энэ эгнээнээс баруун гар тийш эргэхийг зөвшөөрөх үү?",
+    options: [
+      "Зөвшөөрнө",
+      "Хориглоно",
+      "Баруун гар талын эгнээ чөлөөтэй байгаа тохиолдолд хориглоно"
+    ],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-18/q9-45.jpeg"
+  },
+  {
+    id: "9.46",
+    question: "Суудлын автомашин аль чигт явахыг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "Зөвхөн А, Б", "Зөвхөн В, Г", "А, Б, В"],
+    answer: 4,
+    illustration: "/public/illustrations/chapter-18/q9-46.jpeg"
+  },
+  {
+    id: "9.47",
+    question: "Хөдөлгөөний нягтрал ихсэж саатсан үед зурагт үзүүлсэн сумны дагуу уулзвар нэвтрэхийг зөвшөөрөх үү?",
+    options: ["Хориглоно", "Бусдын хөдөлгөөнд саад учруулахгүй бол зөвшөөрнө"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-18/q9-47.jpeg"
+  },
+  {
+    id: "9.48",
+    question: "Мотоциклын жолооч байраа зөв эзэлсэн үү?",
+    options: ["Тийм", "Үгүй"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-18/q9-48.jpeg"
+  },
+  {
+    id: "9.49",
+    question: "Аль тээврийн хэрэгслийн хөдөлгөөнийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн суудлын автомашин", "Зөвхөн ачааны автомашин", "Хоёуланг зөвшөөрнө"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-18/q9-49.jpeg"
+  },
+  {
+    id: "9.50",
+    question: "Аль тээврийн хэрэгслийн хөдөлгөөнийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн суудлын автомашин", "Зөвхөн ачааны автомашин", "Хоёуланг зөвшөөрнө"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-18/q9-50.jpeg"
+  }
+];
+
+const chapterNineteenQuizzes = [
+  {
+    id: "9.51",
+    question: "Суудлын автомашины жолооч тухайн эгнээнээс аль сумны дагуу явахыг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн В", "Зөвхөн А, Б", "Зөвхөн А, В", "А, Б, В"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-19/q9-51.jpeg"
+  },
+  {
+    id: "9.52",
+    question: "Зурагт үзүүлсэн сумны дагуу чигээрээ нэвтрэхийг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-19/q9-52.jpeg"
+  },
+  {
+    id: "9.53",
+    question: "Аль сумны дагуу эргэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн В", "Зөвхөн А, Б", "Зөвхөн Б", "А, Б, В"],
+    answer: 3,
+    illustration: "/public/illustrations/chapter-19/q9-53.jpeg"
+  },
+  {
+    id: "9.54",
+    question: "Суудлын автомашины сумны дагуу хөдөлгөөнийг зөвшөөрөх үү?",
+    options: ["Бусдын хөдөлгөөнд саад учруулахгүй бол зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-19/q9-54.jpeg"
+  },
+  {
+    id: "9.55",
+    question: "Өөдөөсөө яваа тээврийн хэрэгслүүд зүүн гар тийш эргэхдээ аль зурагт үзүүлснээр зөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-55.jpeg"
+  },
+  {
+    id: "9.56",
+    question: "Аль сумны дагуу баруун гар тийш эргэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-19/q9-56.jpeg"
+  },
+  {
+    id: "9.57",
+    question: "Зурагт үзүүлснээр тойрох хөдөлгөөнтэй уулзвар руу зэрэгцэн орохдоо аль автомашины жолооч зөрчил гаргаж байна вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-57.jpeg"
+  },
+  {
+    id: "9.58",
+    question: "Ачааны автомашинтай зүүн гар тийш зэрэгцэн эргэх тохиолдолд суудлын автомашины жолооч аль сумны дагуу хөдөлгөөнөө үргэлжлүүлэхийг зөвшөөрөх вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "А, Б"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-58.jpeg"
+  },
+  {
+    id: "9.59",
+    question: "Уулзварыг чигээрээ нэвтрэх зорилготой ирсэн суудлын автомашины жолооч энэ тохиолдолд ямар арга хэмжээ авах шаардлагатай вэ?",
+    options: [
+      "Үндсэн ногоон гэрэл дохио асахыг хүлээнэ",
+      "Уулзвар руу зүүн гар талын эгнээний харалдаа шилжиж, араасаа ирсэн жолоочид зай гаргаж өгнө",
+      "Өөрийн явах чигийг үл харгалзан баруун гар тийш дохио өгч эргэнэ"
+    ],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-59.jpeg"
+  },
+  {
+    id: "9.60",
+    question: "Энэ тохиолдолд суудлын автомашины жолооч заавал зүүн гар тийш эргэх шаардлагатай юу?",
+    options: [
+      "Чигээрээ явах зорилготой бол шаардлагагүй",
+      "Араас нь ирсэн жолооч зүүн гар тийш эргэхээр дохио өгсөн тохиолдолд шаардлагатай"
+    ],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-19/q9-60.jpeg"
+  },
+  {
+    id: "9.61",
+    question: "Энэ тохиолдолд зурагт үзүүлснээр баруун гар тийш эргэхийг зөвшөөрөх үү?",
+    options: ["Бусдын хөдөлгөөнд саад учруулахгүй бол зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-19/q9-61.jpeg"
+  },
+  {
+    id: "9.62",
+    question: "Зорчих хэсгийн өргөн хүрэлцэхгүй тохиолдолд зурагт үзүүлснээр буцаж эргэхийг зөвшөөрөх үү?",
+    options: [
+      "Хориглоно",
+      "Өөдөөсөө болон араасаа яваа тээврийн хэрэгсэлд зам тавьж өгсний дараа эргэхийг зөвшөөрнө"
+    ],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-62.jpeg"
+  },
+  {
+    id: "9.63",
+    question: "Аль хэсэг дээр буцаж эргэхийг хориглох вэ?",
+    options: ["Зөвхөн уулзвар дээр", "Зөвхөн явган хүний гарц дээр", "Хоёуланд хориглоно", "Хоёуланд зөвшөөрнө"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-19/q9-63.jpeg"
+  },
+  {
+    id: "9.64",
+    question: "Аль тээврийн хэрэгслийн хөдөлгөөнийг хориглох вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "Хоёуланг хориглоно", "Хоёуланг зөвшөөрнө"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-19/q9-64.jpeg"
+  },
+  {
+    id: "9.65",
+    question: "Зурагт үзүүлснээр буцаж эргэхийг зөвшөөрөх үү?",
+    options: ["Хориглоно", "Буцаж эргэхэд зорчих хэсгийн өргөн хүрэлцэхгүй тохиолдолд зөвшөөрнө"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-65.jpeg"
+  },
+  {
+    id: "9.66",
+    question: "Зурагт үзүүлснээр буцаж эргэхийг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-66.jpeg"
+  },
+  {
+    id: "9.67",
+    question: "Аль сумны дагуу буцаж эргэхийг хориглох вэ?",
+    options: ["Зөвхөн А", "Зөвхөн Б", "Зөвхөн А, Б", "Зөвхөн В", "А, Б, В"],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-19/q9-67.jpeg"
+  },
+  {
+    id: "9.68",
+    question: "Гүүрэн дээр буцаж эргэхийг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно", "Өөдөөс яваа тээврийн хэрэгслийг урьдчилан өнгөрүүлсэн тохиолдолд зөвшөөрнө"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-68.jpeg"
+  },
+  {
+    id: "9.69",
+    question: "Хонгил дотор буцаж эргэхийг зөвшөөрөх үү?",
+    options: ["Зорчих хэсгийн өргөн хүрэлцэх бол зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-19/q9-69.jpeg"
+  },
+  {
+    id: "9.70",
+    question: "Замын энэ хэсэгт буцаж эргэхийг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-19/q9-70.jpeg"
+  }
+];
+
+const chapterTwentyQuizzes = [
+  {
+    id: "9.71",
+    question: "Зүүн гар талын зам руу орохын тулд уулзвар дээр зурагт үзүүлснээр ухрахыг зөвшөөрөх үү?",
+    options: ["Бусдад саад учруулахгүй бол зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q9-71.jpeg"
+  },
+  {
+    id: "9.72",
+    question: "Зурагт үзүүлснээр хашаа руу ухарч орохыг зөвшөөрөх үү?",
+    options: ["Бусдад саад учруулахгүй бол зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-20/q9-72.jpeg"
+  },
+  {
+    id: "9.73",
+    question: "Буцаж явахын тулд зурагт үзүүлснээр ухрах үйлдэл хийхийг зөвшөөрөх үү?",
+    options: ["Аюулгүй байдлыг хангасан нөхцөлд зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q9-73.jpeg"
+  },
+  {
+    id: "9.74",
+    question: "Зурагт үзүүлсэн замын хэсэгт ухрах хөдөлгөөнийг зөвшөөрөх үү?",
+    options: [
+      "Зам хөндлөн гарах явган зорчигчгүй үед зөвшөөрнө",
+      "Зөвхөн явган хүний гарц хүртэл ухрахыг зөвшөөрнө",
+      "Нэг чигийн хөдөлгөөнтэй замд хориглоно"
+    ],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-20/q9-74.jpeg"
+  },
+  {
+    id: "9.75",
+    question: "Зурагт үзүүлсэн замын хэсэгт ухрахыг зөвшөөрөх үү?",
+    options: [
+      "Аюулгүй байдлыг хангасан нөхцөлд зөвшөөрнө",
+      "Ажлын өдрийн 7.30-аас 19.00 цагийн хооронд хориглоно"
+    ],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q9-75.jpeg"
+  },
+  {
+    id: "9.76",
+    question: "Зорчигч суулгахын тулд замын энэ хэсэгт ухрахыг зөвшөөрөх үү?",
+    options: [
+      "Хориглоно",
+      "Чиглэлийн тээврийн хэрэгслийн хөдөлгөөнд саад учруулахгүй бол зөвшөөрнө",
+      "Зөвхөн 22-оос 06 цагийн хооронд зөвшөөрнө"
+    ],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-20/q9-76.jpeg"
+  },
+  {
+    id: "9.77",
+    question: "Зогсоолын талбай руу суудлын таксийг ухрааж зогсоохыг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-20/q9-77.jpeg"
+  },
+  {
+    id: "9.78",
+    question: "Энд ухрах хөдөлгөөнийг зөвшөөрөх үү?",
+    options: ["Гармын хөдөлгөөн нээлттэй үед зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q9-78.jpeg"
+  },
+  {
+    id: "9.79",
+    question: "Гүүрний наана гарч зогсохын тулд зурагт үзүүлснээр ухрахыг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q9-79.jpeg"
+  },
+  {
+    id: "9.80",
+    question: "Замын энэ хэсэгт ухрахыг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно", "Ухрах үйлдлийг бусдын тусламжтайгаар гүйцэтгэх бол зөвшөөрнө"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q9-80.jpeg"
+  },
+  {
+    id: "10.1",
+    question: "Зурагт үзүүлсэн эсрэг хөдөлгөөнтэй замаас та зүүн гар тийш эргэхдээ байрлалаа хэрхэн эзлэх вэ?",
+    options: [
+      "Зорчих хэсгийн зүүн гар талын захад",
+      "Зорчих хэсгийн баруун гар талын захад",
+      "Зорчих хэсгийн тэн хагасыг зүүн гар талдаа үлдээж",
+      "Зорчих хэсгийг голлож"
+    ],
+    answer: 2,
+    illustration: "/public/illustrations/chapter-20/q10-1.jpeg"
+  },
+  {
+    id: "10.2",
+    question: "Зурагт үзүүлсэн замаас та зүүн гар тийш эргэхдээ байрлалаа хэрхэн эзлэх вэ?",
+    options: [
+      "Зорчих хэсгийн зүүн гар талын захад",
+      "Зорчих хэсгийн баруун гар талын захад",
+      "Зорчих хэсгийн тэн хагасыг зүүн гар талдаа үлдээж",
+      "Зорчих хэсгийг голлож"
+    ],
+    answer: 3,
+    illustration: "/public/illustrations/chapter-20/q10-2.jpeg"
+  },
+  {
+    id: "10.3",
+    question: "Тээврийн хэрэгслүүд зурагт үзүүлснээр байрлан явахыг зөвшөөрөх үү?",
+    options: ["Хажуугийн аюулгүйн зайг хангасан тохиолдолд зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q10-3.jpeg"
+  },
+  {
+    id: "10.4",
+    question: "Зурагт үзүүлснээр нэг эгнээнд хоёр мотоцикл зэрэгцэн явахыг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q10-4.jpeg"
+  },
+  {
+    id: "10.5",
+    question: "Зурагт үзүүлсэн эсрэг хөдөлгөөнтэй замд аль эгнээгээр байрлан явахыг зөвшөөрөх вэ?",
+    options: ["Зөвхөн баруун гар талын эгнээгээр", "Аль дурын эгнээгээр"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-20/q10-5.jpeg"
+  },
+  {
+    id: "10.6",
+    question: "Хоёр эгнээгээр зорчдог замын баруун гар талын эгнээнд хөдөлгөөний нягтрал ихсэж саатсан үед зүүн гар талын эгнээгээр байрлан явахыг зөвшөөрөх үү?",
+    options: ["Өөдөөс ирж яваа тээврийн хэрэгсэлгүй үед зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q10-6.jpeg"
+  },
+  {
+    id: "10.7",
+    question: "Гүйцэж түрүүлэх зорилгоор эсрэг урсгал сөрөхийг зөвшөөрөх үү?",
+    options: ["Зөвшөөрнө", "Хориглоно"],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q10-7.jpeg"
+  },
+  {
+    id: "10.8",
+    question: "Саадыг тойрон гарахын тулд эсрэг урсгал сөрөхийг зөвшөөрөх үү?",
+    options: [
+      "Өөдөөс ирж яваа тээврийн хэрэгсэлгүй үед зөвшөөрнө",
+      "Баруун гар талын хөвөөгөөр тойрон гарах боломжтой тохиолдолд хориглоно"
+    ],
+    answer: 1,
+    illustration: "/public/illustrations/chapter-20/q10-8.jpeg"
+  },
+  {
+    id: "10.9",
+    question: "Эсрэг хөдөлгөөнтэй хоёр эгнээгээр зорчдог замд зүүн гар талын эгнээ рүү орохыг зөвшөөрөх үү?",
+    options: [
+      "Зөвхөн зүүн гар тийш эргэхийн тулд байр эзлэх тохиолдолд зөвшөөрнө",
+      "Зөвхөн гүйцэж түрүүлэх буюу саадыг тойрон гарах тохиолдолд зөвшөөрнө",
+      "Дээрх бүх тохиолдолд зөвшөөрнө",
+      "Хориглоно"
+    ],
+    answer: 3
+  },
+  {
+    id: "10.10",
+    question: "Та суудлын автомашиныг гүйцэж түрүүлсний дараа баруун гар талын эгнээнд шилжих шаардлагатай юу?",
+    options: ["Шаардлагатай", "Шаардлагагүй"],
+    answer: 0,
+    illustration: "/public/illustrations/chapter-20/q10-10.jpeg"
+  }
+];
+
+// Load 40 card quizzes from external data file
+const cardQuizData = require("./card-quizzes.js");
+
+const quizGroups = cardQuizData.groups.map((group) => ({
+  id: group.id,
+  title: group.title,
+  description: group.description,
+  quizzes: cardQuizData.quizzes[group.id] || []
+}));
 
 function getQuizGroup(groupId) {
   return quizGroups.find((group) => group.id === groupId) || quizGroups[0];
@@ -432,7 +1305,29 @@ function ensureStudentTracking(student) {
   student.activityLog = Array.isArray(student.activityLog) ? student.activityLog : [];
   student.lastLoginAt = student.lastLoginAt || null;
   student.lastActivityAt = student.lastActivityAt || null;
+  student.phone = student.phone || "";
+  student.notes = student.notes || "";
+  student.extensions = Array.isArray(student.extensions) ? student.extensions : [];
+  if (!student.platform || typeof student.platform !== "object") {
+    student.platform = {};
+  }
+  student.platform.chapters =
+    student.platform.chapters && typeof student.platform.chapters === "object"
+      ? student.platform.chapters
+      : {};
+  student.platform.examResults = Array.isArray(student.platform.examResults)
+    ? student.platform.examResults
+    : [];
+  student.platform.studyTimeSec = Number(student.platform.studyTimeSec) || 0;
+  student.platform.lastChapter = student.platform.lastChapter || null;
+  student.platform.currentQuestion = student.platform.currentQuestion || null;
   return student;
+}
+
+function studentStatus(student) {
+  if (student.revokedAt) return "disabled";
+  if (new Date(student.expiresAt).getTime() <= Date.now()) return "expired";
+  return "active";
 }
 
 function ensureStorage() {
@@ -465,10 +1360,12 @@ function saveStore(data) {
 }
 
 function pruneExpiredAccess(data) {
-  const now = Date.now();
-  data.students = data.students.filter((student) => new Date(student.expiresAt).getTime() > now);
-  const activeStudentIds = new Set(data.students.map((student) => student.id));
-  data.sessions = data.sessions.filter((session) => activeStudentIds.has(session.studentId));
+  // Expired students are KEPT (marked expired, extendable by the instructor);
+  // only their live sessions are revoked so they lose access immediately.
+  const usableIds = new Set(
+    data.students.filter((student) => studentStatus(student) === "active").map((s) => s.id)
+  );
+  data.sessions = data.sessions.filter((session) => usableIds.has(session.studentId));
   data.teacherSessions = data.teacherSessions.filter((session) => Boolean(session.token));
 }
 
@@ -497,12 +1394,19 @@ function sendFile(res, filePath) {
       ".jpeg": "image/jpeg",
       ".jpg": "image/jpeg",
       ".png": "image/png",
+      ".webp": "image/webp",
       ".svg": "image/svg+xml; charset=utf-8"
     };
 
-    res.writeHead(200, {
+    const headers = {
       "Content-Type": typeMap[ext] || "application/octet-stream"
-    });
+    };
+    if ([".png", ".jpg", ".jpeg", ".webp", ".svg"].includes(ext)) {
+      headers["Cache-Control"] = "public, max-age=604800";
+    } else if ([".css", ".js", ".json"].includes(ext)) {
+      headers["Cache-Control"] = "public, max-age=300, must-revalidate";
+    }
+    res.writeHead(200, headers);
     res.end(content);
   });
 }
@@ -536,8 +1440,22 @@ function parseRequestBody(req) {
   });
 }
 
-function generateAccessCode() {
-  return `DRV-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+function generateAccessCode(store) {
+  // Unambiguous charset (no 0/O/1/I/L), 8 random chars ≈ 1.1e12 combinations.
+  const charset = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+  const randomGroup = (length) => {
+    let out = "";
+    const bytes = crypto.randomBytes(length);
+    for (let i = 0; i < length; i += 1) out += charset[bytes[i] % charset.length];
+    return out;
+  };
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const code = `DRV-${randomGroup(4)}-${randomGroup(4)}`;
+    if (!store || !store.students.some((student) => student.code === code)) {
+      return code;
+    }
+  }
+  return `DRV-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
 }
 
 function generateSessionToken() {
@@ -673,13 +1591,109 @@ function sanitizeStudent(student) {
   return {
     id: student.id,
     name: student.name,
+    phone: student.phone || "",
+    notes: student.notes || "",
     code: student.code,
+    status: studentStatus(student),
     createdAt: student.createdAt,
     expiresAt: student.expiresAt,
     revokedAt: student.revokedAt || null,
     lastLoginAt: student.lastLoginAt || null,
     lastActivityAt: student.lastActivityAt || null
   };
+}
+
+/* ---------- Platform analytics (new learning platform) ---------- */
+
+function platformSummary(student) {
+  ensureStudentTracking(student);
+  const chapters = Object.entries(student.platform.chapters).map(([chapterId, ch]) => ({
+    chapterId: Number(chapterId),
+    bestScore: ch.bestScore,
+    lastScore: ch.lastScore,
+    attempts: ch.attempts || 0,
+    lastAttemptAt: ch.lastAttemptAt || null
+  }));
+  const scored = chapters.filter((ch) => ch.bestScore !== null && ch.bestScore !== undefined);
+  const passedChapters = scored.filter((ch) => ch.bestScore >= PLATFORM_PASS_SCORE);
+  const exams = student.platform.examResults;
+  const examPassed = exams.filter((e) => e.score >= PLATFORM_PASS_SCORE);
+  const sortedByScore = scored.slice().sort((a, b) => a.bestScore - b.bestScore);
+
+  return {
+    chaptersStarted: scored.length,
+    chaptersPassed: passedChapters.length,
+    totalChapters: TOTAL_PLATFORM_CHAPTERS,
+    progressPercent: Math.round((scored.length / TOTAL_PLATFORM_CHAPTERS) * 100),
+    averageScore: scored.length
+      ? Math.round((scored.reduce((s, ch) => s + ch.bestScore, 0) / scored.length) * 10) / 10
+      : null,
+    highestScore: scored.length ? Math.max(...scored.map((ch) => ch.bestScore)) : null,
+    examCount: exams.length,
+    examPassRate: exams.length ? Math.round((examPassed.length / exams.length) * 100) : null,
+    studyTimeSec: student.platform.studyTimeSec,
+    lastChapter: student.platform.lastChapter,
+    currentQuestion: student.platform.currentQuestion,
+    weakestChapters: sortedByScore.slice(0, 3),
+    strongestChapters: sortedByScore.slice(-3).reverse(),
+    chapters
+  };
+}
+
+function toStudentRow(student) {
+  const summary = platformSummary(student);
+  return {
+    ...sanitizeStudent(student),
+    progressPercent: summary.progressPercent,
+    averageScore: summary.averageScore,
+    chaptersStarted: summary.chaptersStarted,
+    chaptersPassed: summary.chaptersPassed,
+    examCount: summary.examCount,
+    studyTimeSec: summary.studyTimeSec
+  };
+}
+
+function activeWithin(student, ms) {
+  const t = student.lastActivityAt || student.lastLoginAt;
+  return t ? Date.now() - new Date(t).getTime() <= ms : false;
+}
+
+function recordPlatformAttempt(student, payload) {
+  const now = new Date().toISOString();
+  const chapterId = payload.chapterId;
+  const key = String(chapterId);
+  const ch = student.platform.chapters[key] || {
+    bestScore: null,
+    lastScore: null,
+    attempts: 0,
+    firstAttemptAt: now,
+    lastAttemptAt: null
+  };
+  ch.attempts += 1;
+  ch.lastScore = payload.score;
+  ch.bestScore = ch.bestScore === null ? payload.score : Math.max(ch.bestScore, payload.score);
+  ch.lastAttemptAt = now;
+  student.platform.chapters[key] = ch;
+  student.platform.lastChapter = chapterId;
+  student.platform.studyTimeSec += Math.min(Math.max(payload.durationSec || 0, 0), 3600);
+
+  if (payload.mode === "exam") {
+    student.platform.examResults.unshift({
+      chapterId,
+      score: payload.score,
+      total: payload.total,
+      durationSec: payload.durationSec || 0,
+      date: now
+    });
+    student.platform.examResults = student.platform.examResults.slice(0, MAX_EXAM_RESULTS_KEPT);
+  }
+
+  const modeLabel = payload.mode === "exam" ? "Шалгалт" : "Сургалт";
+  recordStudentActivity(student, {
+    type: payload.mode === "exam" ? "exam_complete" : "chapter_complete",
+    createdAt: now,
+    summary: `Бүлэг ${chapterId} дуусгасан — ${payload.score}/${payload.total} (${modeLabel})`
+  });
 }
 
 function toTeacherStudentView(student, store) {
@@ -723,6 +1737,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && pathname === "/practice") {
+    sendFile(res, path.join(PUBLIC_DIR, "practice.html"));
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/login") {
+    sendFile(res, path.join(PUBLIC_DIR, "login.html"));
+    return;
+  }
+
   if (req.method === "GET" && pathname === "/student") {
     sendFile(res, path.join(PUBLIC_DIR, "student.html"));
     return;
@@ -739,7 +1763,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && pathname.startsWith("/public/")) {
-    sendFile(res, path.join(__dirname, pathname));
+    const filePath = path.resolve(__dirname, "." + pathname);
+    if (!filePath.startsWith(PUBLIC_DIR + path.sep)) {
+      sendJson(res, 404, { error: "File not found" });
+      return;
+    }
+    sendFile(res, filePath);
     return;
   }
 
@@ -785,18 +1814,24 @@ const server = http.createServer(async (req, res) => {
       }
 
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + ACCESS_DURATION_DAYS * 24 * 60 * 60 * 1000);
-      const student = {
+      const durationDays =
+        Number.isInteger(body.durationDays) && body.durationDays > 0 && body.durationDays <= 365
+          ? body.durationDays
+          : ACCESS_DURATION_DAYS;
+      const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+      const student = ensureStudentTracking({
         id: crypto.randomUUID(),
         name: String(body.name).trim(),
-        code: generateAccessCode(),
+        phone: String(body.phone || "").trim(),
+        notes: String(body.notes || "").trim(),
+        code: generateAccessCode(store),
         createdAt: now.toISOString(),
         expiresAt: expiresAt.toISOString(),
         lastLoginAt: null,
         lastActivityAt: null,
         chapterProgress: {},
         activityLog: []
-      };
+      });
 
       store.students.unshift(student);
       saveStore(store);
@@ -820,11 +1855,15 @@ const server = http.createServer(async (req, res) => {
 
       const student = store.students.find((item) => item.code === code);
       if (!student) {
-        sendJson(res, 404, { error: "ID олдсонгүй эсвэл хугацаа дууссан байна." });
+        sendJson(res, 404, { error: "ID олдсонгүй. Багшаас авсан Special ID-аа шалгана уу." });
         return;
       }
       if (student.revokedAt) {
-        sendJson(res, 403, { error: "Энэ сурагчийн access багшаар цуцлагдсан байна." });
+        sendJson(res, 403, { error: "Энэ сурагчийн access багшаар түр хаагдсан байна." });
+        return;
+      }
+      if (studentStatus(student) === "expired") {
+        sendJson(res, 403, { error: EXPIRED_LOGIN_MESSAGE, expired: true });
         return;
       }
 
@@ -922,10 +1961,45 @@ const server = http.createServer(async (req, res) => {
 
     sendJson(res, 200, {
       student: {
+        id: auth.student.id,
         name: auth.student.name,
+        code: auth.student.code,
         expiresAt: auth.student.expiresAt
       }
     });
+    return;
+  }
+
+  if (req.method === "POST" && pathname === "/api/student/security-event") {
+    const auth = readSession(req, store);
+    if (!auth) {
+      sendJson(res, 401, { error: "Нэвтрээгүй байна." });
+      return;
+    }
+
+    try {
+      const body = await parseRequestBody(req);
+      const eventType = String(body.type || "").trim();
+      const summary = String(body.summary || "").trim();
+      const groupLabel = String(body.groupId || "").trim();
+
+      if (!eventType || !summary) {
+        sendJson(res, 400, { error: "Security event дутуу байна." });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      recordStudentActivity(auth.student, {
+        type: `security_${eventType}`,
+        createdAt: now,
+        summary: `[SECURITY] ${summary}${groupLabel ? ` (${groupLabel})` : ""}`
+      });
+      saveStore(store);
+
+      sendJson(res, 200, { success: true });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
     return;
   }
 
@@ -1028,6 +2102,309 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && pathname === "/api/student/activity") {
+    const auth = readSession(req, store);
+    if (!auth) {
+      sendJson(res, 401, { error: "Нэвтрээгүй байна." });
+      return;
+    }
+    if (studentStatus(auth.student) !== "active") {
+      sendJson(res, 403, { error: EXPIRED_LOGIN_MESSAGE, expired: true });
+      return;
+    }
+
+    try {
+      const body = await parseRequestBody(req);
+      const type = String(body.type || "").trim();
+      const now = new Date().toISOString();
+      const chapterId = Number(body.chapterId) || null;
+
+      if (type === "heartbeat") {
+        auth.student.lastActivityAt = now;
+        auth.student.platform.studyTimeSec += Math.min(Math.max(Number(body.seconds) || 0, 0), 120);
+        if (chapterId) auth.student.platform.lastChapter = chapterId;
+        if (body.questionNumber) {
+          auth.student.platform.currentQuestion = Number(body.questionNumber) || null;
+        }
+      } else if (type === "chapter_start" && chapterId) {
+        auth.student.platform.lastChapter = chapterId;
+        const modeLabel = body.mode === "exam" ? "Шалгалт" : "Сургалт";
+        recordStudentActivity(auth.student, {
+          type: body.mode === "exam" ? "exam_start" : "chapter_start",
+          createdAt: now,
+          summary: `Бүлэг ${chapterId} эхлүүлсэн (${modeLabel})`
+        });
+      } else if (type === "attempt" && chapterId) {
+        recordPlatformAttempt(auth.student, {
+          chapterId,
+          mode: body.mode === "exam" ? "exam" : "learning",
+          score: Math.min(Math.max(Number(body.score) || 0, 0), 20),
+          total: 20,
+          durationSec: Number(body.durationSec) || 0
+        });
+      } else {
+        sendJson(res, 400, { error: "Тодорхойгүй activity төрөл." });
+        return;
+      }
+
+      saveStore(store);
+      sendJson(res, 200, { success: true });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/student/progress") {
+    const auth = readSession(req, store);
+    if (!auth) {
+      sendJson(res, 401, { error: "Нэвтрээгүй байна." });
+      return;
+    }
+
+    sendJson(res, 200, {
+      student: {
+        name: auth.student.name,
+        code: auth.student.code,
+        expiresAt: auth.student.expiresAt
+      },
+      summary: platformSummary(auth.student)
+    });
+    return;
+  }
+
+  const profileMatch =
+    req.method === "GET" ? pathname.match(/^\/api\/teacher\/students\/([^/]+)$/) : null;
+  if (profileMatch) {
+    const teacherAuth = readTeacherSession(req, store);
+    if (!teacherAuth) {
+      sendJson(res, 401, { error: "Багш нэвтрээгүй байна." });
+      return;
+    }
+
+    const student = store.students.find((item) => item.id === decodeURIComponent(profileMatch[1]));
+    if (!student) {
+      sendJson(res, 404, { error: "Сурагч олдсонгүй." });
+      return;
+    }
+
+    sendJson(res, 200, {
+      student: {
+        ...sanitizeStudent(student),
+        extensions: student.extensions,
+        summary: platformSummary(student),
+        examResults: student.platform.examResults.slice(0, 50),
+        activityTimeline: student.activityLog.slice(0, 60),
+        onlineNow: activeWithin(student, ACTIVE_STUDENT_WINDOW_MS)
+      }
+    });
+    return;
+  }
+
+  const editMatch =
+    req.method === "PATCH" ? pathname.match(/^\/api\/teacher\/students\/([^/]+)$/) : null;
+  if (editMatch) {
+    const teacherAuth = readTeacherSession(req, store);
+    if (!teacherAuth) {
+      sendJson(res, 401, { error: "Багш нэвтрээгүй байна." });
+      return;
+    }
+
+    const student = store.students.find((item) => item.id === decodeURIComponent(editMatch[1]));
+    if (!student) {
+      sendJson(res, 404, { error: "Сурагч олдсонгүй." });
+      return;
+    }
+
+    try {
+      const body = await parseRequestBody(req);
+      if (body.name !== undefined) {
+        const name = String(body.name).trim();
+        if (name.length < 2) {
+          sendJson(res, 400, { error: "Сурагчийн нэр оруулна уу." });
+          return;
+        }
+        student.name = name;
+      }
+      if (body.phone !== undefined) student.phone = String(body.phone).trim();
+      if (body.notes !== undefined) student.notes = String(body.notes).trim();
+      saveStore(store);
+      sendJson(res, 200, { student: sanitizeStudent(student) });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  const extendMatch =
+    req.method === "POST" ? pathname.match(/^\/api\/teacher\/students\/([^/]+)\/extend$/) : null;
+  if (extendMatch) {
+    const teacherAuth = readTeacherSession(req, store);
+    if (!teacherAuth) {
+      sendJson(res, 401, { error: "Багш нэвтрээгүй байна." });
+      return;
+    }
+
+    const student = store.students.find((item) => item.id === decodeURIComponent(extendMatch[1]));
+    if (!student) {
+      sendJson(res, 404, { error: "Сурагч олдсонгүй." });
+      return;
+    }
+
+    try {
+      const body = await parseRequestBody(req);
+      const now = Date.now();
+      const currentExpiry = new Date(student.expiresAt).getTime();
+      let newExpiry;
+
+      if (body.until) {
+        newExpiry = new Date(body.until).getTime();
+        if (!Number.isFinite(newExpiry) || newExpiry <= now) {
+          sendJson(res, 400, { error: "Дуусах огноо ирээдүйд байх ёстой." });
+          return;
+        }
+      } else {
+        const days = Number(body.days);
+        if (!Number.isInteger(days) || days < 1 || days > 365) {
+          sendJson(res, 400, { error: "Сунгах хоног 1-365 хооронд байх ёстой." });
+          return;
+        }
+        // Extend from the current expiry if still in the future, otherwise from now.
+        newExpiry = Math.max(currentExpiry, now) + days * 24 * 60 * 60 * 1000;
+      }
+
+      const nowIso = new Date().toISOString();
+      const newExpiryIso = new Date(newExpiry).toISOString();
+      student.extensions.push({
+        from: student.expiresAt,
+        to: newExpiryIso,
+        days: body.until ? null : Number(body.days),
+        createdAt: nowIso
+      });
+      student.expiresAt = newExpiryIso;
+      recordStudentActivity(student, {
+        type: "access_extended",
+        createdAt: nowIso,
+        summary: `Багш хандах эрхийг ${new Date(newExpiry).toLocaleDateString("mn-MN")} хүртэл сунгасан`
+      });
+      saveStore(store);
+      sendJson(res, 200, { student: sanitizeStudent(student), extensions: student.extensions });
+    } catch (error) {
+      sendJson(res, 400, { error: error.message });
+    }
+    return;
+  }
+
+  const enableMatch =
+    req.method === "POST" ? pathname.match(/^\/api\/teacher\/students\/([^/]+)\/enable$/) : null;
+  if (enableMatch) {
+    const teacherAuth = readTeacherSession(req, store);
+    if (!teacherAuth) {
+      sendJson(res, 401, { error: "Багш нэвтрээгүй байна." });
+      return;
+    }
+
+    const student = store.students.find((item) => item.id === decodeURIComponent(enableMatch[1]));
+    if (!student) {
+      sendJson(res, 404, { error: "Сурагч олдсонгүй." });
+      return;
+    }
+
+    if (student.revokedAt) {
+      student.revokedAt = null;
+      recordStudentActivity(student, {
+        type: "access_enabled",
+        createdAt: new Date().toISOString(),
+        summary: "Багш access-ийг идэвхжүүлсэн"
+      });
+      saveStore(store);
+    }
+    sendJson(res, 200, { student: sanitizeStudent(student) });
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/teacher/students") {
+    const teacherAuth = readTeacherSession(req, store);
+    if (!teacherAuth) {
+      sendJson(res, 401, { error: "Багш нэвтрээгүй байна." });
+      return;
+    }
+
+    sendJson(res, 200, { students: store.students.map(toStudentRow) });
+    return;
+  }
+
+  if (req.method === "GET" && pathname === "/api/teacher/overview") {
+    const teacherAuth = readTeacherSession(req, store);
+    if (!teacherAuth) {
+      sendJson(res, 401, { error: "Багш нэвтрээгүй байна." });
+      return;
+    }
+
+    const students = store.students;
+    const day = 24 * 60 * 60 * 1000;
+    const counts = { active: 0, expired: 0, disabled: 0 };
+    let examTotal = 0;
+    let examScoreSum = 0;
+    const examsPerDay = {};
+    const today = new Date();
+
+    for (let i = 13; i >= 0; i -= 1) {
+      const d = new Date(today.getTime() - i * day);
+      examsPerDay[d.toISOString().slice(0, 10)] = 0;
+    }
+
+    for (const student of students) {
+      ensureStudentTracking(student);
+      counts[studentStatus(student)] += 1;
+      for (const exam of student.platform.examResults) {
+        examTotal += 1;
+        examScoreSum += exam.score;
+        const dayKey = String(exam.date).slice(0, 10);
+        if (dayKey in examsPerDay) examsPerDay[dayKey] += 1;
+      }
+    }
+
+    const expiringSoon = students
+      .filter(
+        (s) =>
+          studentStatus(s) === "active" &&
+          new Date(s.expiresAt).getTime() - Date.now() <= 7 * day
+      )
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        code: s.code,
+        expiresAt: s.expiresAt
+      }))
+      .sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt));
+
+    const mostActive = students
+      .map(toStudentRow)
+      .filter((row) => row.examCount > 0 || row.studyTimeSec > 0)
+      .sort((a, b) => b.studyTimeSec - a.studyTimeSec || b.examCount - a.examCount)
+      .slice(0, 5);
+
+    sendJson(res, 200, {
+      stats: {
+        totalStudents: students.length,
+        activeStudents: counts.active,
+        expiredStudents: counts.expired,
+        disabledStudents: counts.disabled,
+        onlineNow: students.filter((s) => activeWithin(s, ACTIVE_STUDENT_WINDOW_MS)).length,
+        activeLast30Min: students.filter((s) => activeWithin(s, 30 * 60 * 1000)).length,
+        activeToday: students.filter((s) => activeWithin(s, day)).length,
+        activeThisWeek: students.filter((s) => activeWithin(s, 7 * day)).length,
+        totalExams: examTotal,
+        averageExamScore: examTotal ? Math.round((examScoreSum / examTotal) * 10) / 10 : null
+      },
+      examsPerDay,
+      expiringSoon,
+      mostActive
+    });
+    return;
+  }
+
   if (req.method === "GET" && pathname === "/api/teacher/me") {
     const teacherAuth = readTeacherSession(req, store);
     if (!teacherAuth) {
@@ -1051,10 +2428,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     const students = store.students.map((student) => toTeacherStudentView(student, store));
+    const activeNowCount = students.filter((student) => {
+      if (student.revokedAt) {
+        return false;
+      }
+      const recentTime = student.lastActivityAt || student.lastLoginAt;
+      if (!recentTime) {
+        return false;
+      }
+      return Date.now() - new Date(recentTime).getTime() <= ACTIVE_STUDENT_WINDOW_MS;
+    }).length;
     sendJson(res, 200, {
       stats: {
         studentCount: students.length,
-        activeSessionCount: students.filter((student) => student.activeSession).length,
+        activeSessionCount: activeNowCount,
         activeChapterCount: students.reduce((sum, student) => sum + student.chapters.length, 0)
       },
       students

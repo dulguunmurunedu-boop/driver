@@ -1,6 +1,6 @@
 const token = localStorage.getItem("studentToken") || "";
 const params = new URLSearchParams(window.location.search);
-const groupId = params.get("group") || "chapter-1";
+const groupId = params.get("group") || "card-01";
 
 const pageTitle = document.getElementById("quiz-page-title");
 const pageDescription = document.getElementById("quiz-page-description");
@@ -10,7 +10,10 @@ const quizMessage = document.getElementById("quiz-message");
 const quizForm = document.getElementById("quiz-form");
 const submitQuizButton = document.getElementById("submit-quiz");
 const quizResult = document.getElementById("quiz-result");
+const securityWatermark = document.getElementById("security-watermark");
 let currentQuizzes = [];
+let currentStudent = null;
+const securityEventThrottle = new Map();
 
 function setMessage(element, text, type = "") {
   element.textContent = text;
@@ -45,6 +48,127 @@ async function request(url, options = {}) {
   return data;
 }
 
+function escapeSvgText(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function updateWatermark() {
+  if (!currentStudent || !securityWatermark) {
+    return;
+  }
+
+  const timestamp = formatDate(new Date().toISOString());
+  const lineOne = `${currentStudent.name} • ${currentStudent.code}`;
+  const lineTwo = `${groupId} • ${timestamp}`;
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="360" height="220">
+      <g transform="rotate(-24 180 110)">
+        <text x="20" y="100" fill="white" fill-opacity="0.95" font-size="20" font-family="Segoe UI, sans-serif">${escapeSvgText(lineOne)}</text>
+        <text x="20" y="132" fill="white" fill-opacity="0.82" font-size="16" font-family="Segoe UI, sans-serif">${escapeSvgText(lineTwo)}</text>
+      </g>
+    </svg>
+  `;
+  securityWatermark.style.setProperty(
+    "--watermark-image",
+    `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+  );
+}
+
+async function logSecurityEvent(type, summary) {
+  const throttleKey = `${type}:${summary}`;
+  const now = Date.now();
+  const lastSent = securityEventThrottle.get(throttleKey) || 0;
+  if (now - lastSent < 10000) {
+    return;
+  }
+
+  securityEventThrottle.set(throttleKey, now);
+  try {
+    await request("/api/student/security-event", {
+      method: "POST",
+      body: JSON.stringify({
+        type,
+        summary,
+        groupId
+      })
+    });
+  } catch (error) {
+    console.error("Security event log failed:", error.message);
+  }
+}
+
+function registerSecurityGuards() {
+  document.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    logSecurityEvent("contextmenu", "Right click хийхийг оролдсон");
+  });
+
+  document.addEventListener("copy", () => {
+    logSecurityEvent("copy", "Хуулах үйлдэл хийсэн");
+  });
+
+  document.addEventListener("cut", () => {
+    logSecurityEvent("cut", "Cut хийх үйлдэл хийсэн");
+  });
+
+  document.addEventListener("paste", () => {
+    logSecurityEvent("paste", "Paste хийх үйлдэл хийсэн");
+  });
+
+  window.addEventListener("blur", () => {
+    logSecurityEvent("window_blur", "Browser цонхноос гарсан");
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      logSecurityEvent("visibility_change", "Tab солих эсвэл page нуусан");
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    const key = event.key.toLowerCase();
+    if (key === "printscreen") {
+      logSecurityEvent("printscreen", "PrintScreen товч дарсан");
+    }
+    if ((event.ctrlKey || event.metaKey) && key === "p") {
+      event.preventDefault();
+      logSecurityEvent("print_shortcut", "Print shortcut ашиглахыг оролдсон");
+    }
+    if ((event.ctrlKey || event.metaKey) && key === "s") {
+      event.preventDefault();
+      logSecurityEvent("save_shortcut", "Save shortcut ашиглахыг оролдсон");
+    }
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && (key === "s" || key === "4")) {
+      logSecurityEvent("screenshot_shortcut", "Screenshot shortcut ашиглахыг оролдсон");
+    }
+  });
+
+  window.addEventListener("beforeprint", () => {
+    logSecurityEvent("beforeprint", "Print dialog нээсэн");
+  });
+}
+
+function openImageModal(src) {
+  const modal = document.getElementById("image-modal");
+  const modalImg = document.getElementById("image-modal-img");
+  if (modal && modalImg) {
+    modal.style.display = "flex";
+    modalImg.src = src;
+  }
+}
+
+function closeImageModal() {
+  const modal = document.getElementById("image-modal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
 function renderQuizzes(quizzes) {
   quizForm.innerHTML = quizzes
     .map(
@@ -54,7 +178,7 @@ function renderQuizzes(quizzes) {
             <span class="quiz-number">${quiz.id}</span>
           </div>
           <h4>${quiz.question}</h4>
-          ${quiz.illustration ? `<img class="quiz-illustration" src="${quiz.illustration}" alt="${quiz.id} дүрслэл" />` : ""}
+          ${quiz.illustration ? `<img class="quiz-illustration" src="${quiz.illustration}" alt="${quiz.id} дүрслэл" onclick="openImageModal('${quiz.illustration}')" style="cursor:pointer;" title="Дарж том харна уу" />` : ""}
           <div class="option-list">
             ${quiz.options
               .map(
@@ -106,13 +230,12 @@ function renderAnswerReview(results) {
     });
 
     const explanationHtml =
-      groupId === "chapter-1" && review.explanation
-        ? `<p><strong>Тайлбар:</strong> ${review.explanation}</p>`
+      review.answerText
+        ? `<p><strong>Зөв хариулт:</strong> ${review.answerText}</p>`
         : "";
 
     feedback.innerHTML = `
       <p><strong>${review.correct ? "Зөв хариуллаа." : "Буруу хариуллаа."}</strong></p>
-      <p><strong>Зөв хариулт:</strong> ${review.answerText}</p>
       ${explanationHtml}
     `;
     feedback.hidden = false;
@@ -142,10 +265,12 @@ async function init() {
       request(`/api/quizzes?group=${encodeURIComponent(groupId)}`)
     ]);
 
+    currentStudent = me.student;
     studentName.textContent = me.student.name;
     studentExpiry.textContent = formatDate(me.student.expiresAt);
     pageTitle.textContent = quizData.activeGroup.title;
     pageDescription.textContent = quizData.activeGroup.description;
+    updateWatermark();
 
     if (!quizData.quizzes.length) {
       quizForm.innerHTML = "";
@@ -156,7 +281,7 @@ async function init() {
 
     currentQuizzes = quizData.quizzes;
     renderQuizzes(currentQuizzes);
-    setMessage(quizMessage, `${quizData.activeGroup.quizCount} асуулт бэлэн байна.`, "success");
+    setMessage(quizMessage, `${quizData.activeGroup.quizCount} асуулт бэлэн байна. Зураг дээр дарж том харна уу.`, "success");
   } catch (error) {
     setMessage(quizMessage, error.message, "error");
   }
@@ -184,4 +309,6 @@ submitQuizButton.addEventListener("click", async () => {
   }
 });
 
+registerSecurityGuards();
+setInterval(updateWatermark, 60000);
 init();

@@ -4,7 +4,14 @@
   "description": "Simple driving course practice test app with time-limited student access",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "import:images": "node scripts/import-images.js",
+    "convert:images": "node scripts/convert-images.js",
+    "generate:data": "node scripts/generate-data.js",
+    "validate": "node scripts/validate.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "sharp": "^0.35.1"
+  }
 }

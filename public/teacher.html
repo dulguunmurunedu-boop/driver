@@ -3,83 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Teacher Dashboard</title>
-    <link rel="stylesheet" href="/public/styles.css" />
+    <title>Багшийн самбар — Жолооны дүрмийн тест</title>
+    <link rel="stylesheet" href="/public/platform.css" />
+    <script src="/public/platform.js"></script>
   </head>
   <body>
-    <div class="background-grid"></div>
-    <main class="shell">
-      <section class="hero hero-slim">
-        <div class="hero-topbar">
-          <div>
-            <p class="eyebrow">Teacher Dashboard</p>
-            <h1>Багшийн удирдлагын хуудас</h1>
-            <p class="hero-copy">
-              Сурагчдын access, бүлгийн явц, хамгийн сүүлийн activity болон шинэ Special ID үүсгэлтийг эндээс хянаарай.
-            </p>
+    <div class="admin-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">🎓</span>
+          <span>Багшийн самбар</span>
+        </div>
+        <div class="topbar-actions">
+          <button id="theme-toggle" class="icon-btn" type="button" aria-label="Гэрэл/харанхуй горим солих">🌙</button>
+          <button id="logout-btn" class="icon-btn" type="button" aria-label="Гарах" title="Гарах">⏻</button>
+        </div>
+      </header>
+
+      <nav class="tabs" aria-label="Самбарын хэсгүүд">
+        <button class="tab-btn active" data-tab="overview" type="button">Тойм</button>
+        <button class="tab-btn" data-tab="students" type="button">Сурагчид</button>
+      </nav>
+
+      <div id="error-area"></div>
+
+      <!-- ============ OVERVIEW TAB ============ -->
+      <section id="tab-overview">
+        <div class="warn-banner" id="expiring-banner" hidden></div>
+
+        <div class="admin-stats-grid" id="overview-stats">
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+          <div class="card stat-card skeleton-card"></div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <h3 class="section-title" style="margin:0">Шалгалтын идэвх — сүүлийн 14 хоног</h3>
+            <div class="chart-bars" id="exam-chart"></div>
+            <div class="chart-labels" id="exam-chart-labels"></div>
           </div>
-          <div class="hero-actions">
-            <a class="ghost-link" href="/">Нүүр</a>
-            <button id="teacher-logout-button" class="ghost-button" type="button">Гарах</button>
+          <div class="card">
+            <h3 class="section-title" style="margin:0">Хамгийн идэвхтэй сурагчид</h3>
+            <div class="ranked-list" id="most-active"></div>
           </div>
         </div>
       </section>
 
-      <section class="grid teacher-grid">
-        <div class="panel">
-          <div class="panel-header">
-            <h2>Special ID үүсгэх</h2>
-            <p>Шинэ сурагчид 30 хоногийн хугацаатай access нээнэ.</p>
+      <!-- ============ STUDENTS TAB ============ -->
+      <section id="tab-students" hidden>
+        <div id="students-list-view">
+          <div class="toolbar">
+            <input class="search-input" id="search-input" type="search" placeholder="Нэр, утас, ID-аар хайх…" />
+            <select id="status-filter" aria-label="Төлөвөөр шүүх">
+              <option value="all">Бүх төлөв</option>
+              <option value="active">Идэвхтэй</option>
+              <option value="expired">Хугацаа дууссан</option>
+              <option value="disabled">Хаагдсан</option>
+            </select>
+            <select id="sort-select" aria-label="Эрэмбэлэх">
+              <option value="createdAt">Шинэ нь эхэндээ</option>
+              <option value="name">Нэрээр</option>
+              <option value="expiresAt">Дуусах огноогоор</option>
+              <option value="lastActive">Сүүлийн идэвхээр</option>
+              <option value="progress">Явцаар</option>
+              <option value="score">Дундаж оноогоор</option>
+            </select>
+            <button class="btn btn-primary" id="new-student-btn" type="button">+ Шинэ сурагч</button>
           </div>
 
-          <form id="teacher-create-form" class="stack">
-            <label>
-              <span>Сурагчийн нэр</span>
-              <input type="text" name="name" placeholder="Сурагчийн нэр" required />
-            </label>
-
-            <button type="submit">Special ID үүсгэх</button>
-          </form>
-
-          <div id="teacher-create-message" class="message muted">
-            Үүсгэсэн access мэдээлэл энд харагдана.
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="stats-grid">
-            <article class="stat-card">
-              <span class="meta-label">Нийт сурагч</span>
-              <strong id="stat-students">0</strong>
-            </article>
-            <article class="stat-card">
-              <span class="meta-label">Идэвхтэй нэвтэрсэн</span>
-              <strong id="stat-active-sessions">0</strong>
-            </article>
-            <article class="stat-card">
-              <span class="meta-label">Нийт chapter activity</span>
-              <strong id="stat-active-chapters">0</strong>
-            </article>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header compact">
-            <div>
-              <h2>Сурагчдын хяналт</h2>
-              <p>Сүүлийн нэвтрэлт, хийж буй бүлгүүд, оноо, activity.</p>
+          <div class="card" id="create-card" hidden style="margin-bottom:14px">
+            <h3 style="margin:0 0 14px">Шинэ сурагч бүртгэх</h3>
+            <form id="create-form" class="form-grid">
+              <label><span>Бүтэн нэр *</span><input name="name" required minlength="2" /></label>
+              <label><span>Утасны дугаар</span><input name="phone" type="tel" /></label>
+              <label><span>Хандах хугацаа (хоног)</span><input name="durationDays" type="number" value="30" min="1" max="365" /></label>
+              <label><span>Тэмдэглэл</span><input name="notes" /></label>
+              <div class="full" style="display:flex;gap:10px">
+                <button class="btn btn-primary" type="submit">Бүртгэх ба ID үүсгэх</button>
+                <button class="btn btn-ghost" type="button" id="create-cancel">Болих</button>
+              </div>
+            </form>
+            <div class="new-id-reveal" id="new-id-reveal" hidden>
+              <div class="nid-label">Шинэ сурагчийн Special Access ID</div>
+              <div class="nid-code" id="new-id-code"></div>
+              <button class="btn btn-soft" id="copy-id-btn" type="button">📋 Хуулах</button>
             </div>
-            <button id="teacher-refresh-button" class="ghost-button" type="button">Шинэчлэх</button>
           </div>
 
-          <div id="teacher-dashboard-message" class="message muted">
-            Сурагчдын мэдээллийг ачаалж байна.
+          <div class="table-wrap">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th data-sort="name">Нэр</th>
+                  <th>Access ID</th>
+                  <th>Төлөв</th>
+                  <th data-sort="createdAt">Бүртгэсэн</th>
+                  <th data-sort="expiresAt">Дуусах</th>
+                  <th data-sort="lastActive">Сүүлд идэвхтэй</th>
+                  <th data-sort="progress">Явц</th>
+                  <th data-sort="score">Дундаж</th>
+                  <th>Үйлдэл</th>
+                </tr>
+              </thead>
+              <tbody id="students-tbody"></tbody>
+            </table>
           </div>
-
-          <section id="teacher-student-grid" class="teacher-student-grid"></section>
+          <div class="empty-state" id="students-empty" hidden>Сурагч олдсонгүй.</div>
         </div>
+
+        <!-- Student profile -->
+        <div id="student-profile-view" hidden></div>
       </section>
-    </main>
+    </div>
 
     <script src="/public/teacher.js"></script>
   </body>
