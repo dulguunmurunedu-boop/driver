@@ -9,6 +9,12 @@ const DATA_DIR = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
   : path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "store.json");
+// When MONGODB_URI is set the store is persisted to MongoDB (works on hosts
+// with no persistent disk, e.g. Render free tier). Otherwise it falls back to
+// the local JSON file — handy for offline development.
+const MONGODB_URI = process.env.MONGODB_URI || "";
+const MONGODB_DB = process.env.MONGODB_DB || "driving_test";
+const STORE_DOC_ID = "store";
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ACCESS_DURATION_DAYS = 30;
 const MAX_ACTIVITY_LOG_ITEMS = 100;
@@ -1330,33 +1336,97 @@ function studentStatus(student) {
   return "active";
 }
 
-function ensureStorage() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+// ---------- Storage layer ----------
+// The whole store lives in a single in-memory object (`memoryStore`) so the
+// request handlers stay fully synchronous. `saveStore` persists that object to
+// the active backend: MongoDB (one document) or the local JSON file.
+
+let memoryStore = null;
+let storageBackend = "file";
+let mongoCollection = null;
+let mongoWriteInFlight = false;
+let mongoWritePending = false;
+
+function normalizeStore(data) {
+  const store = data && typeof data === "object" ? data : {};
+  store.students = Array.isArray(store.students) ? store.students.map(ensureStudentTracking) : [];
+  store.sessions = Array.isArray(store.sessions) ? store.sessions : [];
+  store.teacherSessions = Array.isArray(store.teacherSessions) ? store.teacherSessions : [];
+  return store;
+}
+
+function emptyStore() {
+  return { students: [], sessions: [], teacherSessions: [] };
+}
+
+async function initStore() {
+  if (MONGODB_URI) {
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
+    await client.connect();
+    mongoCollection = client.db(MONGODB_DB).collection("appstore");
+    const doc = await mongoCollection.findOne({ _id: STORE_DOC_ID });
+    if (doc) {
+      const { _id, ...data } = doc;
+      memoryStore = normalizeStore(data);
+    } else {
+      memoryStore = normalizeStore(emptyStore());
+      await mongoCollection.insertOne({ _id: STORE_DOC_ID, ...memoryStore });
+    }
+    storageBackend = "mongo";
+    console.log(`Storage: MongoDB (db "${MONGODB_DB}")`);
+    return;
   }
 
-  if (!fs.existsSync(DATA_FILE)) {
-    const initialData = {
-      students: [],
-      sessions: [],
-      teacherSessions: []
-    };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
+  // File backend (local development / hosts with a persistent disk).
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (fs.existsSync(DATA_FILE)) {
+    memoryStore = normalizeStore(JSON.parse(fs.readFileSync(DATA_FILE, "utf8")));
+  } else {
+    memoryStore = normalizeStore(emptyStore());
+    fs.writeFileSync(DATA_FILE, JSON.stringify(memoryStore, null, 2));
   }
+  storageBackend = "file";
+  console.log(`Storage: JSON file (${DATA_FILE})`);
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "WARNING: running without MONGODB_URI — data will NOT survive a restart on an ephemeral host."
+    );
+  }
+}
+
+// Coalesced MongoDB writes: never run two replaceOne calls at once, and if a
+// save arrives mid-write, schedule exactly one more flush afterwards.
+function flushMongo() {
+  if (mongoWriteInFlight) {
+    mongoWritePending = true;
+    return;
+  }
+  mongoWriteInFlight = true;
+  mongoCollection
+    .replaceOne({ _id: STORE_DOC_ID }, { _id: STORE_DOC_ID, ...memoryStore }, { upsert: true })
+    .catch((err) => console.error("MongoDB persist failed:", err.message))
+    .finally(() => {
+      mongoWriteInFlight = false;
+      if (mongoWritePending) {
+        mongoWritePending = false;
+        flushMongo();
+      }
+    });
 }
 
 function loadStore() {
-  ensureStorage();
-  const raw = fs.readFileSync(DATA_FILE, "utf8");
-  const data = JSON.parse(raw);
-  data.students = Array.isArray(data.students) ? data.students.map(ensureStudentTracking) : [];
-  data.sessions = Array.isArray(data.sessions) ? data.sessions : [];
-  data.teacherSessions = Array.isArray(data.teacherSessions) ? data.teacherSessions : [];
-  return data;
+  return memoryStore;
 }
 
 function saveStore(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  // Handlers always pass the singleton, but guard against a stray copy.
+  if (data && data !== memoryStore) memoryStore = data;
+  if (storageBackend === "mongo") {
+    flushMongo();
+  } else {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(memoryStore, null, 2));
+  }
 }
 
 function pruneExpiredAccess(data) {
@@ -2452,7 +2522,13 @@ const server = http.createServer(async (req, res) => {
   sendJson(res, 404, { error: "Not found" });
 });
 
-server.listen(PORT, () => {
-  ensureStorage();
-  console.log(`Driving test app is running on http://localhost:${PORT}`);
-});
+initStore()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`Driving test app is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to initialise storage:", err.message);
+    process.exit(1);
+  });

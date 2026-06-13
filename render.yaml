@@ -2,7 +2,7 @@ services:
   - type: web
     name: driving-test-app
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install --omit=dev
     startCommand: npm start
     envVars:
@@ -10,9 +10,7 @@ services:
         value: 20
       - key: TEACHER_PASSWORD
         sync: false
-      - key: DATA_DIR
-        value: /opt/render/project/src/data
-    disk:
-      name: driving-test-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+      # MongoDB Atlas connection string (free M0 cluster). Data persists here
+      # because the free tier has no persistent disk.
+      - key: MONGODB_URI
+        sync: false
