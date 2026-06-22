@@ -120,7 +120,7 @@
   function loadQuestions() {
     if (!questionsPromise) {
       // ?v= busts force-cached copies when the dataset changes (v2: WebP images)
-      questionsPromise = fetch("/public/data/questions.json?v=2", { cache: "force-cache" })
+      questionsPromise = fetch("/public/data/questions.json?v=3", { cache: "no-store" })
         .then((res) => {
           if (!res.ok) throw new Error("Асуултын өгөгдөл ачаалагдсангүй (" + res.status + ")");
           return res.json();
